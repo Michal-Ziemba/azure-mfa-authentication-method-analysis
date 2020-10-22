@@ -133,6 +133,8 @@ function Analyse-MsolUserStrongAuthMethods {
     $UserPrincipalName = $_.UserPrincipalName
     $DisplayName = $_.DisplayName
     [string]$ObjectId = $_.ObjectId
+    $AuthPhone = $_.StrongAuthenticationUserDetails.PhoneNumber
+    $AltAuthPhone = $_.StrongAuthenticationUserDetails.AlternativePhoneNumber
 
     if ($LocationInfo) {
 
@@ -207,13 +209,15 @@ function Analyse-MsolUserStrongAuthMethods {
             {$_.MethodType -eq "TwoWayVoiceMobile"} {
 
                 $Phone = "Yes"        
+                
             
             }
 
             #Check for method type - OneWaySMS
             {$_.MethodType -eq "TwoWayVoiceAlternateMobile"} {
             
-                $AltPhone = "Yes"     
+                $AltPhone = "Yes"  
+                
             
             }
 
@@ -263,8 +267,10 @@ function Analyse-MsolUserStrongAuthMethods {
             Sms = $Sms
             Phone = $Phone
             AltPhone = $AltPhone
+            AuthPhone = $AuthPhone 
+            AltAuthPhone = $AltAuthPhone
             Recommendations = $Recommendations
-
+            
         }
 
     }
@@ -282,8 +288,10 @@ function Analyse-MsolUserStrongAuthMethods {
             Sms = $Sms
             Phone = $Phone
             AltPhone = $AltPhone
+            AuthPhone = $AuthPhone 
+            AltAuthPhone = $AltAuthPhone
             Recommendations = $Recommendations
-
+            
         }
 
 
@@ -472,13 +480,13 @@ if ($DomainInfo) {
         #Create file with header
         if ($LocationInfo) {
 
-            Add-Content -Value "UserPrincipalName,DisplayName,ObjectId,UpnDomain,UsageLocation,Country,MfaAuthMethodCount,DefaultMethod,AppNotification,OathTotp,Sms,Phone,AltPhone,Recommendations" `
+            Add-Content -Value "UserPrincipalName;DisplayName;ObjectId;UpnDomain;UsageLocation;Country;MfaAuthMethodCount;DefaultMethod;AppNotification;OathTotp;Sms;Phone;AltPhone;AuthPhone;AltAuthPhone;Recommendations" `
                         -Path $OutputFile
 
         }
         else {
 
-            Add-Content -Value "UserPrincipalName,DisplayName,ObjectId,MfaAuthMethodCount,DefaultMethod,AppNotification,OathTotp,Sms,Phone,AltPhone,Recommendations" `
+            Add-Content -Value "UserPrincipalName;DisplayName;ObjectId;MfaAuthMethodCount;DefaultMethod;AppNotification;OathTotp;Sms;Phone;AltPhone;AuthPhone;AltAuthPhone;Recommendations" `
                         -Path $OutputFile
 
         }
@@ -598,6 +606,7 @@ if ($DomainInfo) {
 
         #We're not tagtetting a group, so let's process all users
         Get-MsolUser -All -ErrorAction SilentlyContinue | ForEach-Object {
+        #Get-MsolUser -UserPrincipalName wibar@flugger.com -ErrorAction SilentlyContinue | ForEach-Object {
         
             Write-Verbose -Message "$(Get-Date -f T) - Processing $(($_).UserPrincipalName)"
 
@@ -610,7 +619,7 @@ if ($DomainInfo) {
                 Write-Verbose -Message "$(Get-Date -f T) - Converting analysis to CSV format"
 
                 #Call property expansion function and pipe into a CSV format
-                $CsvFormat = $TargetUser | Expand-Recommendations | ConvertTo-Csv -NoTypeInformation
+                $CsvFormat = $TargetUser | Expand-Recommendations | ConvertTo-Csv -NoTypeInformation -Delimiter ";"
 
 
                 Write-Verbose -Message "$(Get-Date -f T) - Writing conversion to CSV file"
